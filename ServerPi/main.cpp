@@ -1,4 +1,5 @@
 #include <wiringPi.h>
+#include <wiringPiI2C.h>
 #include <stdio.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -9,22 +10,30 @@
 #include <unistd.h>
 #include <errno.h>
 
-// LED Pin - wiringPi pin 0 is BCM_GPIO 17.
-// we have to use BCM numbering when initializing with wiringPiSetupSys
-// when choosing a different pin number please use the BCM numbering, also
-// update the Property Pages - Build Events - Remote Post-Build Event command 
-// which uses gpio export for setup for wiringPiSetupSys
 #define GPIO0     11
 #define GPIO2    13
+#define MPU6050_ADDRESS (0x68)
+#define MPU6050_REG_PWR_MGMT_1 (0x6b)
+#define MPU6050_REG_DATA_START (0x3b)
+#define A_SCALE (16384.0)
+#define ANG_SCALE (131.0)
 #define SOCK_STREAM 1
 #define AF_INET 2
+
+const int MPU_addr = 0x68;
+int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+
+
 void error(char *msg) {
 	perror(msg);
 	exit(1);
 }
 
-int func(int a) {
-	return 2 * a;
+void checkRC(int rc, char *text) {
+	if (rc < 0) {
+		printf("Error: %s - %d\n");
+		exit(-1);
+	}
 }
 
 void sendData(int sockfd, int x) {
@@ -46,11 +55,52 @@ int getData(int sockfd) {
 	return buffer[0];
 }
 
+void readMPU(int fd) {
+	uint8_t msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START);
+	uint8_t lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 1);
+	AcX = msb << 8 | lsb;
+
+	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 2);
+	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 3);
+	AcY = msb << 8 | lsb;
+
+	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 4);
+	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 5);
+	AcZ = msb << 8 | lsb;
+
+	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 6);
+	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 7);
+	Tmp = msb << 8 | lsb;
+
+	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 8);
+	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 9);
+	GyX = msb << 8 | lsb;
+
+	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 10);
+	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 11);
+	GyY = msb << 8 | lsb;
+
+	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 12);
+	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 13);
+	GyZ = msb << 8 | lsb;
+
+	printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
+}
+
 int main(void)
 {
 	printf("Raspberry Pi blink\n");
 
 	wiringPiSetupSys();
+	wiringPiSetup();
+
+	// Open an I2C connection
+	int fd = wiringPiI2CSetup(MPU6050_ADDRESS);
+	checkRC(fd, "wiringPiI2CSetup");
+
+	// Perform I2C work
+	wiringPiI2CWriteReg8(fd, MPU6050_REG_PWR_MGMT_1, 0);
+
 	pinMode(GPIO0, OUTPUT);
 	pinMode(GPIO2, OUTPUT);
 
@@ -88,8 +138,8 @@ int main(void)
 				break;
 			else
 				printf("got %d\n", data);
-			if (data == 1) {
-				digitalWrite(GPIO0, HIGH);
+			if (data == 49) {
+				readMPU(fd);
 			}
 			else if (data == 2) {
 				digitalWrite(GPIO0, HIGH);
