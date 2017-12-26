@@ -10,18 +10,26 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define GPIO0     11
-#define GPIO2    13
+#define MO1    11
+#define MO2    13
+#define MO3    15
+#define MO4    19
+
 #define MPU6050_ADDRESS (0x68)
 #define MPU6050_REG_PWR_MGMT_1 (0x6b)
 #define MPU6050_REG_DATA_START (0x3b)
 #define A_SCALE (16384.0)
 #define ANG_SCALE (131.0)
+
+#define TRIG (21)
+#define ECHO (23)
+
 #define SOCK_STREAM 1
 #define AF_INET 2
 
 const int MPU_addr = 0x68;
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+
 
 
 void error(char *msg) {
@@ -87,6 +95,29 @@ void readMPU(int fd) {
 	printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
 }
 
+void readHCSR04() {
+	digitalWrite(TRIG, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(TRIG, LOW);
+	unsigned int echoStart = millis();
+	while (digitalRead(ECHO) == LOW && millis() - echoStart < 1000) {
+		// do nothing
+	}
+	if (millis() - echoStart < 1000) {
+		// Mark start
+		unsigned int start = micros();
+		while (digitalRead(ECHO) == HIGH) {
+			// do nothing
+		}
+		// Mark end
+		unsigned int end = micros();
+		unsigned int delta = end - start;
+
+		double distance = 34029 * delta / 2000000.0;
+		printf("Distance: %f\n", distance);
+	}
+}
+
 int main(void)
 {
 	printf("Raspberry Pi blink\n");
@@ -101,8 +132,14 @@ int main(void)
 	// Perform I2C work
 	wiringPiI2CWriteReg8(fd, MPU6050_REG_PWR_MGMT_1, 0);
 
-	pinMode(GPIO0, OUTPUT);
-	pinMode(GPIO2, OUTPUT);
+	pinMode(TRIG, OUTPUT);
+	pinMode(ECHO, INPUT);
+	digitalWrite(TRIG, LOW);
+
+	delay(50);
+
+	pinMode(MO1, OUTPUT);
+	pinMode(MO2, OUTPUT);
 
 	int sockfd, newsockfd, portno = 51717, clilen;
 	char buffer[256];
@@ -141,16 +178,15 @@ int main(void)
 			if (data == 49) {
 				readMPU(fd);
 			}
-			else if (data == 2) {
-				digitalWrite(GPIO0, HIGH);
-				digitalWrite(GPIO2, HIGH);
+			else if (data == 50) {
+				readHCSR04();
 			}
 			else if (data == 3) {
-				digitalWrite(GPIO2, HIGH);
+				digitalWrite(MO2, HIGH);
 			}
 			else if (data == 4) {
-				digitalWrite(GPIO0, LOW);   // Off
-				digitalWrite(GPIO2, LOW);
+				digitalWrite(MO1, LOW);   // Off
+				digitalWrite(MO2, LOW);
 			}
 		}
 		close(newsockfd);
