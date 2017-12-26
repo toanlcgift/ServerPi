@@ -10,10 +10,10 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define MO1    11
-#define MO2    13
-#define MO3    15
-#define MO4    19
+#define MO1    0//index 11
+#define MO2    2//index 13
+#define MO3    3//index 15
+#define MO4    12//index 19
 
 #define MPU6050_ADDRESS (0x68)
 #define MPU6050_REG_PWR_MGMT_1 (0x6b)
@@ -21,14 +21,14 @@
 #define A_SCALE (16384.0)
 #define ANG_SCALE (131.0)
 
-#define TRIG (21)
-#define ECHO (23)
+#define TRIG (13) //index 21
+#define ECHO (14) //index 23
 
 #define SOCK_STREAM 1
 #define AF_INET 2
 
 const int MPU_addr = 0x68;
-int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 
 
 
@@ -140,6 +140,12 @@ int main(void)
 
 	pinMode(MO1, OUTPUT);
 	pinMode(MO2, OUTPUT);
+	pinMode(MO3, OUTPUT);
+	pinMode(MO4, OUTPUT);
+	digitalWrite(MO1, HIGH);
+	digitalWrite(MO2, HIGH);
+	digitalWrite(MO3, HIGH);
+	digitalWrite(MO4, HIGH);
 
 	int sockfd, newsockfd, portno = 51717, clilen;
 	char buffer[256];
@@ -177,16 +183,28 @@ int main(void)
 				printf("got %d\n", data);
 			if (data == 49) {
 				readMPU(fd);
+				write(newsockfd, "AcX", 5);
 			}
 			else if (data == 50) {
 				readHCSR04();
 			}
-			else if (data == 3) {
-				digitalWrite(MO2, HIGH);
+			else if (data == 51) {
+				digitalWrite(MO1, LOW);
 			}
-			else if (data == 4) {
-				digitalWrite(MO1, LOW);   // Off
+			else if (data == 52) {
 				digitalWrite(MO2, LOW);
+			}
+			else if (data == 53) {
+				digitalWrite(MO3, LOW);
+			}
+			else if (data == 54) {
+				digitalWrite(MO4, LOW);
+			}
+			else if (data == 55) {
+				digitalWrite(MO1, HIGH);
+				digitalWrite(MO2, HIGH);
+				digitalWrite(MO3, HIGH);
+				digitalWrite(MO4, HIGH);
 			}
 		}
 		close(newsockfd);
