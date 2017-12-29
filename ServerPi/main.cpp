@@ -14,7 +14,6 @@
 #define MO2    2//index 13
 #define MO3    3//index 15
 #define MO4    12//index 19
-#define ENA 6 //index  22
 
 #define MPU6050_ADDRESS (0x68)
 #define MPU6050_REG_PWR_MGMT_1 (0x6b)
@@ -143,8 +142,6 @@ int main(void)
 	pinMode(MO2, OUTPUT);
 	pinMode(MO3, OUTPUT);
 	pinMode(MO4, OUTPUT);
-	pinMode(ENA, OUTPUT);
-	digitalWrite(ENA, HIGH);
 	digitalWrite(MO1, LOW);
 	digitalWrite(MO2, LOW);
 	digitalWrite(MO3, LOW);
