@@ -14,6 +14,7 @@
 #define MO2    2//index 13
 #define MO3    3//index 15
 #define MO4    12//index 19
+#define ENA 6 //index  22
 
 #define MPU6050_ADDRESS (0x68)
 #define MPU6050_REG_PWR_MGMT_1 (0x6b)
@@ -142,10 +143,12 @@ int main(void)
 	pinMode(MO2, OUTPUT);
 	pinMode(MO3, OUTPUT);
 	pinMode(MO4, OUTPUT);
-	digitalWrite(MO1, HIGH);
-	digitalWrite(MO2, HIGH);
-	digitalWrite(MO3, HIGH);
-	digitalWrite(MO4, HIGH);
+	pinMode(ENA, OUTPUT);
+	digitalWrite(ENA, HIGH);
+	digitalWrite(MO1, LOW);
+	digitalWrite(MO2, LOW);
+	digitalWrite(MO3, LOW);
+	digitalWrite(MO4, LOW);
 
 	int sockfd, newsockfd, portno = 51717, clilen;
 	char buffer[256];
@@ -189,23 +192,26 @@ int main(void)
 				readHCSR04();
 			}
 			else if (data == 51) {
-				digitalWrite(MO1, LOW);
-			}
-			else if (data == 52) {
+				printf("mo1 high mo2 low");
+				digitalWrite(MO1, HIGH);
 				digitalWrite(MO2, LOW);
 			}
-			else if (data == 53) {
-				digitalWrite(MO3, LOW);
+			else if (data == 52) {
+				printf("mo1 low mo2 high");
+				digitalWrite(MO1, LOW);
+				digitalWrite(MO2, HIGH);
 			}
-			else if (data == 54) {
+			else if (data == 53) {
+				printf("mo3 high mo4 low");
+				digitalWrite(MO3, HIGH);
 				digitalWrite(MO4, LOW);
 			}
-			else if (data == 55) {
-				digitalWrite(MO1, HIGH);
-				digitalWrite(MO2, HIGH);
-				digitalWrite(MO3, HIGH);
+			else if (data == 54) {
+				printf("mo3 low mo4 high");
+				digitalWrite(MO3, LOW);
 				digitalWrite(MO4, HIGH);
 			}
+			
 		}
 		close(newsockfd);
 
