@@ -15,6 +15,11 @@
 #define MO3    3//index 15
 #define MO4    12//index 19
 
+#define  MO5 15 //8
+#define MO6 16 //10
+#define MO7 1//12
+#define MO8 4//16
+
 #define MPU6050_ADDRESS (0x68)
 #define MPU6050_REG_PWR_MGMT_1 (0x6b)
 #define MPU6050_REG_DATA_START (0x3b)
@@ -180,35 +185,71 @@ int main(void)
 			if (data < 0)
 				break;
 			else
+				//FIX ME: write sensor data to client
 				printf("got %d\n", data);
-			if (data == 49) {
+			switch (data)
+			{
+			case 'a':
 				readMPU(fd);
-				write(newsockfd, "AcX", 5);
-			}
-			else if (data == 50) {
+				//FIX ME: write MPU sensor data to client
+				break;
+			case 'b':
 				readHCSR04();
-			}
-			else if (data == 51) {
+				//FIX ME: write HCSR04 sensor data to client
+				break;
+			case 'c':
 				printf("mo1 high mo2 low");
 				digitalWrite(MO1, HIGH);
 				digitalWrite(MO2, LOW);
-			}
-			else if (data == 52) {
+				break;
+			case 'd':
 				printf("mo1 low mo2 high");
 				digitalWrite(MO1, LOW);
 				digitalWrite(MO2, HIGH);
-			}
-			else if (data == 53) {
+				break;
+			case 'e':
 				printf("mo3 high mo4 low");
 				digitalWrite(MO3, HIGH);
 				digitalWrite(MO4, LOW);
-			}
-			else if (data == 54) {
+				break;
+			case 'f':
 				printf("mo3 low mo4 high");
 				digitalWrite(MO3, LOW);
 				digitalWrite(MO4, HIGH);
+				break;
+			case 'g':
+				printf("mo5 high mo6 low");
+				digitalWrite(MO5, HIGH);
+				digitalWrite(MO6, LOW);
+				break;
+			case 'h':
+				printf("mo5 low mo6 high");
+				digitalWrite(MO5, LOW);
+				digitalWrite(MO6, HIGH);
+				break;
+			case 'i':
+				printf("mo7 high mo8 low");
+				digitalWrite(MO7, HIGH);
+				digitalWrite(MO8, LOW);
+				break;
+			case 'j':
+				printf("mo7 low mo8 high");
+				digitalWrite(MO7, LOW);
+				digitalWrite(MO8, HIGH);
+				break;
+			case 'k':
+				digitalWrite(MO1, LOW);
+				digitalWrite(MO2, LOW);
+				digitalWrite(MO3, LOW);
+				digitalWrite(MO4, LOW);
+				digitalWrite(MO5, LOW);
+				digitalWrite(MO6, LOW);
+				digitalWrite(MO7, LOW);
+				digitalWrite(MO8, LOW);
+				break;
+			default:
+				break;
 			}
-			
 		}
 		close(newsockfd);
 
