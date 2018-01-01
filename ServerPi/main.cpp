@@ -125,7 +125,7 @@ void readHCSR04() {
 
 int main(void)
 {
-	printf("Raspberry Pi blink\n");
+	printf("Raspberry Pi\n");
 
 	wiringPiSetupSys();
 	wiringPiSetup();
