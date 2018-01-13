@@ -53,7 +53,7 @@ void sendData(int sockfd) {
 	int n;
 	char buffer[1000];
 	memset(buffer, '\0', 1000);
-	sprintf(buffer, "{\"distance\":\"%f\", \"gx\" : \"%f\", \"gy\" : \"%f\", \"gz\" : \"%f\"}\r\n", distance, GyX, GyY, GyZ);
+	sprintf(buffer, "{\"distance\":\"%f\", \"gx\" : \"%.3f\", \"gy\" : \"%.3f\", \"gz\" : \"%.3f\"}\r\n", distance, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
 	if ((n = write(sockfd, buffer, strlen(buffer))) < 0)
 		error(const_cast<char *>("ERROR writing to socket"));
 	delay(100);
@@ -72,31 +72,31 @@ int getData(int sockfd) {
 void readMPU(int fd) {
 	uint8_t msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START);
 	uint8_t lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 1);
-	AcX = msb << 8 | lsb;
+	AcX = (msb << 8) | lsb;
 
 	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 2);
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 3);
-	AcY = msb << 8 | lsb;
+	AcY = (msb << 8) | lsb;
 
 	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 4);
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 5);
-	AcZ = msb << 8 | lsb;
+	AcZ = (msb << 8) | lsb;
 
 	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 6);
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 7);
-	Tmp = msb << 8 | lsb;
+	Tmp = (msb << 8) | lsb;
 
 	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 8);
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 9);
-	GyX = msb << 8 | lsb;
+	GyX = (msb << 8) | lsb;
 
 	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 10);
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 11);
-	GyY = msb << 8 | lsb;
+	GyY = (msb << 8) | lsb;
 
 	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 12);
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 13);
-	GyZ = msb << 8 | lsb;
+	GyZ = (msb << 8) | lsb;
 
 	printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
 }
