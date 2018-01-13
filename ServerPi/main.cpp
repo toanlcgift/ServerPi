@@ -34,7 +34,7 @@
 
 const int MPU_addr = 0x68;
 short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
-
+double distance;
 
 
 void error(char *msg) {
@@ -49,14 +49,15 @@ void checkRC(int rc, char *text) {
 	}
 }
 
-void sendData(int sockfd, int x) {
+void sendData(int sockfd) {
 	int n;
-
-	char buffer[32];
-	sprintf(buffer, "%d\n", x);
+	char buffer[1000];
+	memset(buffer, '\0', 1000);
+	sprintf(buffer, "{\"distance\":\"%f\", \"gx\" : \"%f\", \"gy\" : \"%f\", \"gz\" : \"%f\"}\r\n", distance, GyX, GyY, GyZ);
 	if ((n = write(sockfd, buffer, strlen(buffer))) < 0)
 		error(const_cast<char *>("ERROR writing to socket"));
-	buffer[n] = '\0';
+	delay(100);
+	//buffer[n] = '\0';
 }
 
 int getData(int sockfd) {
@@ -118,14 +119,14 @@ void readHCSR04() {
 		unsigned int end = micros();
 		unsigned int delta = end - start;
 
-		double distance = 34029 * delta / 2000000.0;
+		distance = 34029 * delta / 2000000.0;
 		printf("Distance: %f\n", distance);
 	}
 }
 
 int main(void)
 {
-	printf("Raspberry Pi blink\n");
+	printf("Raspberry Pi\n");
 
 	wiringPiSetupSys();
 	wiringPiSetup();
@@ -152,7 +153,7 @@ int main(void)
 	digitalWrite(MO3, LOW);
 	digitalWrite(MO4, LOW);
 
-	int sockfd, newsockfd, portno = 51717, clilen;
+	int sockfd, newsockfd, portno = 51717, client;
 	char buffer[256];
 	struct sockaddr_in serv_addr, cli_addr;
 	int n;
@@ -172,20 +173,23 @@ int main(void)
 		sizeof(serv_addr)) < 0)
 		error(const_cast<char *>("ERROR on binding"));
 	listen(sockfd, 5);
-	clilen = sizeof(cli_addr);
+	client = sizeof(cli_addr);
 	//--- infinite wait on a connection ---
 	while (1) {
 		printf("waiting for new client...\n");
-		if ((newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t*)&clilen)) < 0)
+		if ((newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t*)&client)) < 0)
 			error(const_cast<char *>("ERROR on accept"));
 		printf("opened new communication with client\n");
+
 		while (1) {
 			//---- wait for a number from client ---
-			data = getData(newsockfd);
+			//data = getData(newsockfd);
+			readHCSR04();
+			readMPU(fd);
+			sendData(newsockfd);
 			if (data < 0)
 				break;
 			else
-				//FIX ME: write sensor data to client
 				printf("got %d\n", data);
 			switch (data)
 			{
