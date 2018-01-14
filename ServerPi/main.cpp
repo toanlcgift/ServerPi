@@ -9,16 +9,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <math.h>
+#include <pthread.h>
 
 #define MO1    0//index 11
 #define MO2    2//index 13
 #define MO3    3//index 15
 #define MO4    12//index 19
-
-#define  MO5 15 //8
-#define MO6 16 //10
-#define MO7 1//12
-#define MO8 4//16
 
 #define MPU6050_ADDRESS (0x68)
 #define MPU6050_REG_PWR_MGMT_1 (0x6b)
@@ -32,10 +29,15 @@
 #define SOCK_STREAM 1
 #define AF_INET 2
 
+int fd;
+int newsockfd;
+int data;
+
 const int MPU_addr = 0x68;
 short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 double distance;
 
+pthread_t thread1, thread2;
 
 void error(char *msg) {
 	perror(msg);
@@ -69,6 +71,11 @@ int getData(int sockfd) {
 	return buffer[0];
 }
 
+float dist(float a, float b)
+{
+	return sqrt((a*a) + (b*b));
+}
+
 void readMPU(int fd) {
 	uint8_t msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START);
 	uint8_t lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 1);
@@ -98,7 +105,16 @@ void readMPU(int fd) {
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 13);
 	GyZ = (msb << 8) | lsb;
 
-	printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
+	//printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
+	float radians1 = atan2(AcX / A_SCALE, dist(AcY / A_SCALE, AcZ / A_SCALE));
+	float degrees1 = radians1 * 180 / 3.14;
+
+	float radians2 = atan2(AcY / A_SCALE, dist(AcX / A_SCALE, AcZ / A_SCALE));
+	float degrees2 = radians2 * 180 / 3.14;
+
+	float radians3 = atan2(AcZ / A_SCALE, dist(AcX / A_SCALE, AcY / A_SCALE));
+	float degrees3 = radians3 * 180 / 3.14;
+	printf("degrees: %f ----- %f ----- %f", degrees1, degrees2, degrees3);
 }
 
 void readHCSR04() {
@@ -124,6 +140,68 @@ void readHCSR04() {
 	}
 }
 
+void *readclient(void *ptr) {
+
+	while (1) {
+		//---- wait for a number from client ---
+		readHCSR04();
+		readMPU(fd);
+		printf("ptr: %d", newsockfd);
+		sendData(newsockfd);
+	}
+}
+
+void *writeclient(void *ptr) {
+	while (1) {
+		data = getData(newsockfd);
+		if (data < 0)
+			break;
+		else
+			printf("got %d\n", data);
+		switch (data)
+		{
+		case 'a':
+			readMPU(fd);
+			sendData(newsockfd);
+			//FIX ME: write MPU sensor data to client
+			break;
+		case 'b':
+			readHCSR04();
+			sendData(newsockfd);
+			//FIX ME: write HCSR04 sensor data to client
+			break;
+		case 'c':
+			printf("mo1 high mo2 low");
+			digitalWrite(MO1, HIGH);
+			digitalWrite(MO2, LOW);
+			break;
+		case 'd':
+			printf("mo1 low mo2 high");
+			digitalWrite(MO1, LOW);
+			digitalWrite(MO2, HIGH);
+			break;
+		case 'e':
+			printf("mo3 high mo4 low");
+			digitalWrite(MO3, HIGH);
+			digitalWrite(MO4, LOW);
+			break;
+		case 'f':
+			printf("mo3 low mo4 high");
+			digitalWrite(MO3, LOW);
+			digitalWrite(MO4, HIGH);
+			break;
+		case 'g':
+			digitalWrite(MO1, LOW);
+			digitalWrite(MO2, LOW);
+			digitalWrite(MO3, LOW);
+			digitalWrite(MO4, LOW);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 int main(void)
 {
 	printf("Raspberry Pi\n");
@@ -132,7 +210,7 @@ int main(void)
 	wiringPiSetup();
 
 	// Open an I2C connection
-	int fd = wiringPiI2CSetup(MPU6050_ADDRESS);
+	fd = wiringPiI2CSetup(MPU6050_ADDRESS);
 	checkRC(fd, "wiringPiI2CSetup");
 
 	// Perform I2C work
@@ -153,11 +231,10 @@ int main(void)
 	digitalWrite(MO3, LOW);
 	digitalWrite(MO4, LOW);
 
-	int sockfd, newsockfd, portno = 51717, client;
+	int sockfd, portno = 51717, client;
 	char buffer[256];
 	struct sockaddr_in serv_addr, cli_addr;
 	int n;
-	int data;
 
 	printf("using port #%d\n", portno);
 
@@ -179,82 +256,13 @@ int main(void)
 		printf("waiting for new client...\n");
 		if ((newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t*)&client)) < 0)
 			error(const_cast<char *>("ERROR on accept"));
-		printf("opened new communication with client\n");
+		printf("opened new communication with client %d\n", newsockfd);
 
-		while (1) {
-			//---- wait for a number from client ---
-			//data = getData(newsockfd);
-			readHCSR04();
-			readMPU(fd);
-			sendData(newsockfd);
-			if (data < 0)
-				break;
-			else
-				printf("got %d\n", data);
-			switch (data)
-			{
-			case 'a':
-				readMPU(fd);
-				//FIX ME: write MPU sensor data to client
-				break;
-			case 'b':
-				readHCSR04();
-				//FIX ME: write HCSR04 sensor data to client
-				break;
-			case 'c':
-				printf("mo1 high mo2 low");
-				digitalWrite(MO1, HIGH);
-				digitalWrite(MO2, LOW);
-				break;
-			case 'd':
-				printf("mo1 low mo2 high");
-				digitalWrite(MO1, LOW);
-				digitalWrite(MO2, HIGH);
-				break;
-			case 'e':
-				printf("mo3 high mo4 low");
-				digitalWrite(MO3, HIGH);
-				digitalWrite(MO4, LOW);
-				break;
-			case 'f':
-				printf("mo3 low mo4 high");
-				digitalWrite(MO3, LOW);
-				digitalWrite(MO4, HIGH);
-				break;
-			case 'g':
-				printf("mo5 high mo6 low");
-				digitalWrite(MO5, HIGH);
-				digitalWrite(MO6, LOW);
-				break;
-			case 'h':
-				printf("mo5 low mo6 high");
-				digitalWrite(MO5, LOW);
-				digitalWrite(MO6, HIGH);
-				break;
-			case 'i':
-				printf("mo7 high mo8 low");
-				digitalWrite(MO7, HIGH);
-				digitalWrite(MO8, LOW);
-				break;
-			case 'j':
-				printf("mo7 low mo8 high");
-				digitalWrite(MO7, LOW);
-				digitalWrite(MO8, HIGH);
-				break;
-			case 'k':
-				digitalWrite(MO1, LOW);
-				digitalWrite(MO2, LOW);
-				digitalWrite(MO3, LOW);
-				digitalWrite(MO4, LOW);
-				digitalWrite(MO5, LOW);
-				digitalWrite(MO6, LOW);
-				digitalWrite(MO7, LOW);
-				digitalWrite(MO8, LOW);
-				break;
-			default:
-				break;
-			}
-		}
+		int iret1 = pthread_create(&thread1, NULL, readclient, NULL);
+		int iret2 = pthread_create(&thread2, NULL, writeclient, NULL);
+		pthread_join(thread1, NULL);
+		pthread_join(thread2, NULL);
+
 		close(newsockfd);
 
 		//--- if -2 sent by client, we can quit ---
