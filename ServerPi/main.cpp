@@ -35,6 +35,7 @@ int data;
 
 const int MPU_addr = 0x68;
 short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+float pitch, roll, yaw;
 double distance;
 
 pthread_t thread1, thread2;
@@ -55,7 +56,7 @@ void sendData(int sockfd) {
 	int n;
 	char buffer[1000];
 	memset(buffer, '\0', 1000);
-	sprintf(buffer, "{\"distance\":\"%f\", \"gx\" : \"%.3f\", \"gy\" : \"%.3f\", \"gz\" : \"%.3f\"}\r\n", distance, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
+	sprintf(buffer, "{\"distance\":\"%f\", \"pitch\" : \"%.3f\", \"roll\" : \"%.3f\", \"yaw\" : \"%.3f\"}\r\n", distance, pitch, roll, yaw);
 	if ((n = write(sockfd, buffer, strlen(buffer))) < 0)
 		error(const_cast<char *>("ERROR writing to socket"));
 	delay(100);
@@ -107,14 +108,14 @@ void readMPU(int fd) {
 
 	//printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
 	float radians1 = atan2(AcX / A_SCALE, dist(AcY / A_SCALE, AcZ / A_SCALE));
-	float degrees1 = radians1 * 180 / 3.14;
+	float pitch = radians1 * 180 / 3.14;
 
 	float radians2 = atan2(AcY / A_SCALE, dist(AcX / A_SCALE, AcZ / A_SCALE));
-	float degrees2 = radians2 * 180 / 3.14;
+	float roll = radians2 * 180 / 3.14;
 
 	float radians3 = atan2(AcZ / A_SCALE, dist(AcX / A_SCALE, AcY / A_SCALE));
-	float degrees3 = radians3 * 180 / 3.14;
-	printf("degrees: %f ----- %f ----- %f", degrees1, degrees2, degrees3);
+	float yaw = radians3 * 180 / 3.14;
+	printf("degrees: %f ----- %f ----- %f", pitch, roll, yaw);
 }
 
 void readHCSR04() {
