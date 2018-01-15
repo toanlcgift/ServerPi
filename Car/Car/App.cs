@@ -9,6 +9,8 @@ namespace Car
 {
 	public class App : Application
 	{
+        public static float Height;
+        public static float Width;
 		public App ()
 		{
 			// The root page of your application

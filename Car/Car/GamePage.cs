@@ -19,7 +19,7 @@ namespace Car
                 HorizontalOptions = LayoutOptions.FillAndExpand,
                 VerticalOptions = LayoutOptions.FillAndExpand,
                 // Set the game world dimensions
-                DesignResolution = new Size(1366, 768),
+                DesignResolution = new Size(App.Width, App.Height),
                 // Set the method to call once the view has been initialised
                 ViewCreated = LoadGame
             };

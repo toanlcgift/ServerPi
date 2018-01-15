@@ -19,8 +19,11 @@ namespace Car.Droid
 		protected override void OnCreate (Bundle bundle)
 		{
 			base.OnCreate (bundle);
+            var displaymetric = Resources.DisplayMetrics;
+            App.Height = displaymetric.HeightPixels;
+            App.Width = displaymetric.WidthPixels;
 
-			global::Xamarin.Forms.Forms.Init (this, bundle);
+            global::Xamarin.Forms.Forms.Init (this, bundle);
 			LoadApplication (new Car.App ());
 		}
 	}
