@@ -5,12 +5,15 @@ namespace Car
 {
     public partial class TestCar : ContentPage
     {
-        int i = 0;
-
         public TestCar()
         {
             InitializeComponent();
         }
-        
+
+        private void Start_Clicked(object sender, System.EventArgs e)
+        {
+            App.IPAddress = IPEntry.Text;
+            App.Current.MainPage.Navigation.PushAsync(new GamePage());
+        }
     }
 }

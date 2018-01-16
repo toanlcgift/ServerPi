@@ -4,7 +4,8 @@
              x:Class="Car.TestCar">
     <Grid RowSpacing="0">
         <StackLayout Orientation="Vertical">
-            <Button x:Name="Start" VerticalOptions="Center" Text="Start"></Button>
+            <Entry x:Name="IPEntry" Placeholder="IP Address" Text="192.168.17.102"></Entry>
+            <Button x:Name="Start" VerticalOptions="Center" Text="Start" Clicked="Start_Clicked"></Button>
         </StackLayout>
     </Grid>
 </ContentPage>

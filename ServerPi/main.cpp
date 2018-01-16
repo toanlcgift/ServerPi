@@ -182,16 +182,24 @@ void *writeclient(void *ptr) {
 			digitalWrite(MO2, HIGH);
 			break;
 		case 'e':
+			digitalWrite(MO1, LOW);
+			digitalWrite(MO2, LOW);
+			break;
+		case 'f':
 			printf("mo3 high mo4 low");
 			digitalWrite(MO3, HIGH);
 			digitalWrite(MO4, LOW);
 			break;
-		case 'f':
+		case 'g':
 			printf("mo3 low mo4 high");
 			digitalWrite(MO3, LOW);
 			digitalWrite(MO4, HIGH);
 			break;
-		case 'g':
+		case 'h':
+			digitalWrite(MO3, LOW);
+			digitalWrite(MO4, LOW);
+			break;
+		case 'i':
 			digitalWrite(MO1, LOW);
 			digitalWrite(MO2, LOW);
 			digitalWrite(MO3, LOW);

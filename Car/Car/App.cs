@@ -11,11 +11,12 @@ namespace Car
 	{
         public static float Height;
         public static float Width;
+        public static string IPAddress;
 		public App ()
 		{
 			// The root page of your application
             // The root page of your application
-            MainPage = new GamePage();
+            MainPage = new NavigationPage(new TestCar());
 		}
 
 		protected override void OnStart ()

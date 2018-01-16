@@ -4,6 +4,7 @@ using CocosSharp;
 using Microsoft.Xna.Framework;
 using Sockets.Plugin;
 using System;
+using System.Linq;
 
 namespace Car
 {
@@ -13,26 +14,18 @@ namespace Car
         // Define a label variable
         CCSprite spriteUp1;
         CCSprite spriteUp2;
-        CCSprite spriteUp3;
-        CCSprite spriteUp4;
         CCSprite spriteDown1;
         CCSprite spriteDown2;
-        CCSprite spriteDown3;
-        CCSprite spriteDown4;
         TcpSocketClient client;
 
-        public GameLayer() : base(CCColor4B.Yellow)
+        public GameLayer() : base(CCColor4B.Transparent)
         {
 
             spriteUp1 = new CCSprite("Up.png");
             spriteUp2 = new CCSprite("Up.png");
-            spriteUp3 = new CCSprite("Up.png");
-            spriteUp4 = new CCSprite("Up.png");
 
             spriteDown1 = new CCSprite("Up.png") { Rotation = 180 };
             spriteDown2 = new CCSprite("Up.png") { Rotation = 180 };
-            spriteDown3 = new CCSprite("Up.png") { Rotation = 180 };
-            spriteDown4 = new CCSprite("Up.png") { Rotation = 180 };
 
             var touchListener = new CCEventListenerTouchAllAtOnce();
             touchListener.OnTouchesBegan = TouchBegan;
@@ -40,35 +33,59 @@ namespace Car
             AddEventListener(touchListener);
             AddChild(spriteUp1);
             AddChild(spriteUp2);
-            AddChild(spriteUp3);
-            AddChild(spriteUp4);
+            AddChild(spriteDown1);
+            AddChild(spriteDown2);
         }
 
         private async void TouchEnd(List<CCTouch> arg1, CCEvent arg2)
         {
-            client.WriteStream.WriteByte(Convert.ToByte('4'));
-            await client.WriteStream.FlushAsync();
+            if (arg1.Count > 0)
+            {
+                try
+                {
+                    if (arg1.Any(x => spriteDown1.BoundingBox.ContainsPoint(x.Location)))
+                    {
+                        client.WriteStream.WriteByte(Convert.ToByte('e'));
+                        await client.WriteStream.FlushAsync();
+                    }
+                    else if (arg1.Any(x => spriteDown2.BoundingBox.ContainsPoint(x.Location)))
+                    {
+                        client.WriteStream.WriteByte(Convert.ToByte('h'));
+                        await client.WriteStream.FlushAsync();
+                    }
+                }
+                catch
+                {
+
+                }
+            }
         }
 
         private async void TouchBegan(List<CCTouch> arg1, CCEvent arg2)
         {
             if (arg1.Count > 0)
             {
-                //if (spriteUp1.BoundingBox.ContainsPoint(arg1[0].Location))
-                //{
-                //    client.WriteStream.WriteByte(Convert.ToByte('2'));
-                //    await client.WriteStream.FlushAsync();
-                //}
-                //else if (spriteLeft.BoundingBox.ContainsPoint(arg1[0].Location))
-                //{
-                //    client.WriteStream.WriteByte(Convert.ToByte('1'));
-                //    await client.WriteStream.FlushAsync();
-                //}
-                //else if (spriteRight.BoundingBox.ContainsPoint(arg1[0].Location))
-                //{
-                //    client.WriteStream.WriteByte(Convert.ToByte('3'));
-                //    await client.WriteStream.FlushAsync();
-                //}
+                if (arg1.Any(x => spriteUp1.BoundingBox.ContainsPoint(x.Location)))
+                {
+                    client.WriteStream.WriteByte(Convert.ToByte('c'));
+                    await client.WriteStream.FlushAsync();
+                }
+                else if (arg1.Any(x => spriteUp2.BoundingBox.ContainsPoint(x.Location)))
+                {
+                    client.WriteStream.WriteByte(Convert.ToByte('f'));
+                    await client.WriteStream.FlushAsync();
+                }
+                else if (arg1.Any(x => spriteDown1.BoundingBox.ContainsPoint(x.Location)))
+                {
+                    client.WriteStream.WriteByte(Convert.ToByte('d'));
+                    await client.WriteStream.FlushAsync();
+                }
+                else if (arg1.Any(x => spriteDown2.BoundingBox.ContainsPoint(x.Location)))
+                {
+                    client.WriteStream.WriteByte(Convert.ToByte('g'));
+                    await client.WriteStream.FlushAsync();
+                }
+
             }
             //await client.DisconnectAsync();
         }
@@ -81,10 +98,17 @@ namespace Car
             var bounds = VisibleBoundsWorldspace;
 
 
-            spriteUp1.PositionX = bounds.Center.X / 4;
+            spriteUp1.PositionX = bounds.Center.X - spriteUp1.ContentSize.Width;
             spriteUp1.PositionY = 4 * bounds.Center.Y / 3;
-            // position the label on the center of the screen
-            //spriteUp.Position = bounds.Center;
+
+            spriteUp2.PositionX = bounds.Center.X + spriteUp2.ContentSize.Width;
+            spriteUp2.PositionY = 4 * bounds.Center.Y / 3;
+
+            spriteDown1.PositionX = bounds.Center.X - spriteDown1.ContentSize.Width;
+            spriteDown1.PositionY = 2 * bounds.Center.Y / 3;
+
+            spriteDown2.PositionX = bounds.Center.X + spriteDown2.ContentSize.Width;
+            spriteDown2.PositionY = 2 * bounds.Center.Y / 3;
 
             client = new TcpSocketClient();
             try
