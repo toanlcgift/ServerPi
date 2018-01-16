@@ -113,7 +113,7 @@ namespace Car
             client = new TcpSocketClient();
             try
             {
-                await client.ConnectAsync("192.168.17.103", 51717);
+                await client.ConnectAsync(App.IPAddress, 51717);
             }
             catch { }
         }
