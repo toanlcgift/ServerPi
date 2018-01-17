@@ -172,14 +172,14 @@ void *writeclient(void *ptr) {
 			//FIX ME: write HCSR04 sensor data to client
 			break;
 		case 'c':
-			printf("mo1 high mo2 low");
-			digitalWrite(MO1, HIGH);
-			digitalWrite(MO2, LOW);
-			break;
-		case 'd':
 			printf("mo1 low mo2 high");
 			digitalWrite(MO1, LOW);
 			digitalWrite(MO2, HIGH);
+			break;
+		case 'd':
+			printf("mo1 high mo2 low");
+			digitalWrite(MO1, HIGH);
+			digitalWrite(MO2, LOW);
 			break;
 		case 'e':
 			digitalWrite(MO1, LOW);

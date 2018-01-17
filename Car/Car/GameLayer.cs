@@ -53,11 +53,30 @@ namespace Car
                         client.WriteStream.WriteByte(Convert.ToByte('h'));
                         await client.WriteStream.FlushAsync();
                     }
+                    else if (arg1.Any(x => spriteUp1.BoundingBox.ContainsPoint(x.Location)))
+                    {
+                        client.WriteStream.WriteByte(Convert.ToByte('e'));
+                        await client.WriteStream.FlushAsync();
+                    }
+                    else if (arg1.Any(x => spriteUp2.BoundingBox.ContainsPoint(x.Location)))
+                    {
+                        client.WriteStream.WriteByte(Convert.ToByte('h'));
+                        await client.WriteStream.FlushAsync();
+                    }
                 }
                 catch
                 {
 
                 }
+            }
+            else
+            {
+                try
+                {
+                    client.WriteStream.WriteByte(Convert.ToByte('i'));
+                    await client.WriteStream.FlushAsync();
+                }
+                catch { }
             }
         }
 
