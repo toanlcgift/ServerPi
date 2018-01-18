@@ -107,14 +107,13 @@ void readMPU(int fd) {
 	GyZ = (msb << 8) | lsb;
 
 	//printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
-	float radians1 = atan2(AcX / A_SCALE, dist(AcY / A_SCALE, AcZ / A_SCALE));
-	float pitch = radians1 * 180 / 3.14;
+	float radians1 = atan2(-AcX / A_SCALE, dist(AcY / A_SCALE, AcZ / A_SCALE));
+	pitch = radians1 * 180 / 3.14;
 
-	float radians2 = atan2(AcY / A_SCALE, dist(AcX / A_SCALE, AcZ / A_SCALE));
-	float roll = radians2 * 180 / 3.14;
+	roll = atan2(AcY/A_SCALE,AcZ/A_SCALE) * 180 / 3.14;
 
 	float radians3 = atan2(AcZ / A_SCALE, dist(AcX / A_SCALE, AcY / A_SCALE));
-	float yaw = radians3 * 180 / 3.14;
+	yaw = radians3 * 180 / 3.14;
 	printf("degrees: %f ----- %f ----- %f", pitch, roll, yaw);
 }
 
