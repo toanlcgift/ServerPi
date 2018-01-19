@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MapControl", "MapControl", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MapControl", "MapControl\MapControl.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MPUTest", "MPUTest\MPUTest.vcxproj", "{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -119,6 +121,18 @@ Global
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|iPhoneSimulator.ActiveCfg = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Debug|ARM.ActiveCfg = Debug|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Debug|iPhone.ActiveCfg = Debug|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Debug|iPhoneSimulator.ActiveCfg = Debug|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Debug|x86.ActiveCfg = Debug|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Debug|x86.Build.0 = Debug|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Release|Any CPU.ActiveCfg = Release|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Release|ARM.ActiveCfg = Release|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Release|iPhone.ActiveCfg = Release|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Release|iPhoneSimulator.ActiveCfg = Release|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Release|x86.ActiveCfg = Release|Win32
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -128,6 +142,7 @@ Global
 		{B4AFEFAB-DBC5-44D6-9F1B-8198C2C01933} = {492E4DCF-FBAD-4B16-8350-E355B8B78AC8}
 		{B135C97C-428F-4265-AC1D-606F4564D561} = {492E4DCF-FBAD-4B16-8350-E355B8B78AC8}
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88} = {81209193-995E-4BD5-B437-75744C77F3D7}
+		{BFDC4C21-08FC-42D9-B5DD-8B181EFF4006} = {81209193-995E-4BD5-B437-75744C77F3D7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5EE295C2-D262-45C3-8D48-CB69F07DCD21}
