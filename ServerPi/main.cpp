@@ -11,7 +11,6 @@
 #include <errno.h>
 #include <math.h>
 #include <pthread.h>
-#include <linux/i2c-dev.h>
 
 #define MO1    0//index 11
 #define MO2    2//index 13
@@ -23,6 +22,7 @@
 #define MPU6050_REG_DATA_START (0x3b)
 #define A_SCALE (16384.0)
 #define ANG_SCALE (131.0)
+#define PI 3.14
 
 #define TRIG (13) //index 21
 #define ECHO (14) //index 23
@@ -121,8 +121,8 @@ void readMPU(int fd) {
 
 	pitchgy = (Gy * ((float)dt / 1000)) + pitch;
 	rollgy = (Gx * ((float)dt / 1000)) + roll;
-	pitchac = atan2(Ax, Az) * (float)(180 / 3.14);
-	rollac = atan2(Ay, Az) * (float)(180 / 3.14);
+	pitchac = atan2(Ax, Az) * (float)(180 / PI);
+	rollac = atan2(Ay, Az) * (float)(180 / PI);
 	roll = gain * rollgy + (1 - gain)* rollac;
 	pitch = gain * pitchgy + (1 - gain) * pitchac;
 	printf("roll: %f \n pitch: %f\n", roll, pitch);
