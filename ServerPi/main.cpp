@@ -34,12 +34,15 @@ int fd;
 int newsockfd;
 int data;
 
+int t = 0, dt = 1;
 const int MPU_addr = 0x68;
 short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
-float pitch, roll, yaw;
+float Ax = 0, Ay = 0, Az = 0;
+float Gx = 0, Gy = 0, Gz = 0;
+float roll = 0, pitch = 0, rollgy = 0, pitchgy = 0, rollac = 0, pitchac = 0, gain = 0.95;
 double distance;
 
-pthread_t thread1, thread2;
+pthread_t thread1, thread2, thread3, thread4;
 
 void error(char *msg) {
 	perror(msg);
@@ -57,11 +60,9 @@ void sendData(int sockfd) {
 	int n;
 	char buffer[1000];
 	memset(buffer, '\0', 1000);
-	sprintf(buffer, "{\"distance\":\"%f\", \"pitch\" : \"%.3f\", \"roll\" : \"%.3f\", \"yaw\" : \"%.3f\"}\r\n", distance, pitch, roll, yaw);
+	sprintf(buffer, "{\"distance\":\"%f\", \"pitch\" : \"%.3f\", \"roll\" : \"%.3f\"}\r\n", distance, pitch, roll);
 	if ((n = write(sockfd, buffer, strlen(buffer))) < 0)
 		error(const_cast<char *>("ERROR writing to socket"));
-	//delay(1000);
-	//buffer[n] = '\0';
 }
 
 int getData(int sockfd) {
@@ -69,7 +70,6 @@ int getData(int sockfd) {
 	int n;
 	if ((n = read(sockfd, buffer, 1)) < 0)
 		error(const_cast<char *>("ERROR reading from socket"));
-	//buffer[n] = '\0';
 	return buffer[0];
 }
 
@@ -79,6 +79,8 @@ float dist(float a, float b)
 }
 
 void readMPU(int fd) {
+
+	t = millis();
 	uint8_t msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START);
 	uint8_t lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 1);
 	AcX = (msb << 8) | lsb;
@@ -107,7 +109,24 @@ void readMPU(int fd) {
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 13);
 	GyZ = (msb << 8) | lsb;
 
-	printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
+	Ax = AcX / A_SCALE;
+	Ay = AcY / A_SCALE;
+	Az = AcZ / A_SCALE;
+
+	Gx = GyX / ANG_SCALE;
+	Gy = GyY / ANG_SCALE;
+	Gz = GyZ / ANG_SCALE;
+
+	printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", Ax, Ay, Az, Gx, Gy, Gz);
+
+	pitchgy = (Gy * ((float)dt / 1000)) + pitch;
+	rollgy = (Gx * ((float)dt / 1000)) + roll;
+	pitchac = atan2(Ax, Az) * (float)(180 / 3.14);
+	rollac = atan2(Ay, Az) * (float)(180 / 3.14);
+	roll = gain * rollgy + (1 - gain)* rollac;
+	pitch = gain * pitchgy + (1 - gain) * pitchac;
+	printf("roll: %f \n pitch: %f\n", roll, pitch);
+	dt = millis() - t;
 }
 
 void readHCSR04() {
@@ -133,17 +152,26 @@ void readHCSR04() {
 	}
 }
 
-void *readclient(void *ptr) {
-
+void *readMPUloop(void *ptr) {
 	while (1) {
-		//---- wait for a number from client ---
-		readHCSR04();
 		readMPU(fd);
-		sendData(newsockfd);
 	}
 }
 
-void *writeclient(void *ptr) {
+void *readHCSR04loop(void *ptr) {
+	while (1) {
+		readHCSR04();
+	}
+}
+
+void *realtimeloop(void *ptr) {
+	while (1) {
+		sendData(newsockfd);
+		delay(100);
+	}
+}
+
+void *controlloop(void *ptr) {
 	while (1) {
 		data = getData(newsockfd);
 		if (data < 0)
@@ -155,20 +183,16 @@ void *writeclient(void *ptr) {
 		case 'a':
 			readMPU(fd);
 			sendData(newsockfd);
-			//FIX ME: write MPU sensor data to client
 			break;
 		case 'b':
 			readHCSR04();
 			sendData(newsockfd);
-			//FIX ME: write HCSR04 sensor data to client
 			break;
 		case 'c':
-			printf("mo1 low mo2 high");
 			digitalWrite(MO1, LOW);
 			digitalWrite(MO2, HIGH);
 			break;
 		case 'd':
-			printf("mo1 high mo2 low");
 			digitalWrite(MO1, HIGH);
 			digitalWrite(MO2, LOW);
 			break;
@@ -177,12 +201,10 @@ void *writeclient(void *ptr) {
 			digitalWrite(MO2, LOW);
 			break;
 		case 'f':
-			printf("mo3 high mo4 low");
 			digitalWrite(MO3, HIGH);
 			digitalWrite(MO4, LOW);
 			break;
 		case 'g':
-			printf("mo3 low mo4 high");
 			digitalWrite(MO3, LOW);
 			digitalWrite(MO4, HIGH);
 			break;
@@ -258,10 +280,14 @@ int main(void)
 			error(const_cast<char *>("ERROR on accept"));
 		printf("opened new communication with client %d\n", newsockfd);
 
-		int iret1 = pthread_create(&thread1, NULL, readclient, NULL);
-		int iret2 = pthread_create(&thread2, NULL, writeclient, NULL);
+		pthread_create(&thread1, NULL, readMPUloop, NULL);
+		pthread_create(&thread2, NULL, readHCSR04loop, NULL);
+		pthread_create(&thread3, NULL, realtimeloop, NULL);
+		pthread_create(&thread4, NULL, controlloop, NULL);
 		pthread_join(thread1, NULL);
 		pthread_join(thread2, NULL);
+		pthread_join(thread3, NULL);
+		pthread_join(thread4, NULL);
 
 		close(newsockfd);
 
