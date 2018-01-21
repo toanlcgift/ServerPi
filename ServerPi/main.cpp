@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <math.h>
 #include <pthread.h>
+#include <linux/i2c-dev.h>
 
 #define MO1    0//index 11
 #define MO2    2//index 13
@@ -59,7 +60,7 @@ void sendData(int sockfd) {
 	sprintf(buffer, "{\"distance\":\"%f\", \"pitch\" : \"%.3f\", \"roll\" : \"%.3f\", \"yaw\" : \"%.3f\"}\r\n", distance, pitch, roll, yaw);
 	if ((n = write(sockfd, buffer, strlen(buffer))) < 0)
 		error(const_cast<char *>("ERROR writing to socket"));
-	delay(100);
+	//delay(1000);
 	//buffer[n] = '\0';
 }
 
@@ -106,15 +107,7 @@ void readMPU(int fd) {
 	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 13);
 	GyZ = (msb << 8) | lsb;
 
-	//printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
-	float radians1 = atan2(-AcX / A_SCALE, dist(AcY / A_SCALE, AcZ / A_SCALE));
-	pitch = radians1 * 180 / 3.14;
-
-	roll = atan2(AcY/A_SCALE,AcZ/A_SCALE) * 180 / 3.14;
-
-	float radians3 = atan2(AcZ / A_SCALE, dist(AcX / A_SCALE, AcY / A_SCALE));
-	yaw = radians3 * 180 / 3.14;
-	printf("degrees: %f ----- %f ----- %f", pitch, roll, yaw);
+	printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", AcX / A_SCALE, AcY / A_SCALE, AcZ / A_SCALE, GyX / ANG_SCALE, GyY / ANG_SCALE, GyZ / ANG_SCALE);
 }
 
 void readHCSR04() {
@@ -146,7 +139,6 @@ void *readclient(void *ptr) {
 		//---- wait for a number from client ---
 		readHCSR04();
 		readMPU(fd);
-		printf("ptr: %d", newsockfd);
 		sendData(newsockfd);
 	}
 }
