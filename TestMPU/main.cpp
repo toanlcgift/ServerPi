@@ -33,7 +33,7 @@ void loop() {
 	float headingDegrees = heading * 180 / M_PI;
 
 	// Output
-	printf(" Heading = %f, Degrees = f",heading, headingDegrees);
+	printf("\n Heading = %f, Degrees = %f",heading, headingDegrees);
 
 	delay(100);
 }

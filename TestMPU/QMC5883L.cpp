@@ -24,14 +24,9 @@ bool DFRobot_QMC5883::begin()
 		writeRegister8(QMC5883_REG_IDENT_C, 0X40);
 		writeRegister8(QMC5883_REG_IDENT_D, 0X01);
 		writeRegister8(QMC5883_REG_CONFIG_1, 0X1D);
-		auto x = fastRegister8(QMC5883_REG_IDENT_B);
-		auto y = fastRegister8(QMC5883_REG_IDENT_C);
-		auto z = fastRegister8(QMC5883_REG_IDENT_D);
-
-		//printf("this is x, y ,z: %x %x %x", x, y, z);
-		if (x != 0x01
-			|| y != 0x40
-			|| z != 0x01) {
+		if (fastRegister8(QMC5883_REG_IDENT_B) != 0x01
+			|| fastRegister8(QMC5883_REG_IDENT_C) != 0x40
+			|| fastRegister8(QMC5883_REG_IDENT_D) != 0x01) {
 			return false;
 		}
 		setRange(QMC5883_RANGE_8GA);
@@ -39,6 +34,9 @@ bool DFRobot_QMC5883::begin()
 		setDataRate(QMC5883_DATARATE_50HZ);
 		setSamples(QMC5883_SAMPLES_8);
 		mgPerDigit = 4.35f;
+		v.XAxis = 0;
+		v.YAxis = 0;
+		v.ZAxis = 0;
 		return true;
 	}
 	return false;
@@ -89,9 +87,10 @@ void DFRobot_QMC5883::initMinMax()
 	maxZ = v.ZAxis;
 }
 
-long map(long x, long in_min, long in_max, long out_min, long out_max)
+long map(float x, float in_min, float in_max, float out_min, float out_max)
 {
-	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	auto z = (in_max - in_min) + out_min;
+		return (x - in_min) * (out_max - out_min) / z;
 }
 
 Vector DFRobot_QMC5883::readNormalize(void)
@@ -234,11 +233,13 @@ int DFRobot_QMC5883::fastRegister8(int reg)
 // Read byte from register
 int DFRobot_QMC5883::readRegister8(int reg)
 {
+	wiringPiI2CWrite(fd, reg);
 	return wiringPiI2CReadReg8(fd, reg);
 }
 // Read word from register
 int DFRobot_QMC5883::readRegister16(int reg)
 {
+	wiringPiI2CWrite(fd, reg);
 	return wiringPiI2CReadReg16(fd, reg);
 }
 
