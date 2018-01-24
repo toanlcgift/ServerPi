@@ -35,7 +35,7 @@ void loop() {
 	// Output
 	printf("\n Heading = %f, Degrees = %f",heading, headingDegrees);
 
-	delay(100);
+	//delay(100);
 }
 int main()
 {
