@@ -8,10 +8,10 @@
 #ifndef HMC5883L_H_
 #define HMC5883L_H_
 
-#define HMC5883L_ADDRESS (0x1e)
+#define HMC5883L_ADDRESS (0x0D)
 
-#define HCM5883L_REG_CONFIG_A (0x00)
-#define HCM5883L_REG_CONFIG_B (0x01)
+#define HCM5883L_REG_CONFIG_A (0x09)
+#define HCM5883L_REG_CONFIG_B (0x0A)
 #define HMC5883L_REG_MODE     (0x02)
 #define HMC5883L_REG_MSB_X    (0x03)
 #define HMC5883L_REG_LSB_X    (0x04)
