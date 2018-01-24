@@ -15,18 +15,18 @@ void loop() {
 	// Set declination angle on your location and fix heading
 	// You can find your declination on: http://magnetic-declination.com/
 	// (+) Positive or (-) for negative
-	// For Bytom / Poland declination angle is 4'26E (positive)
+	// For HaNoi/VietNam declination angle is -1'28E (positive)
 	// Formula: (deg + (min / 60.0)) / (180 / M_PI);
-	float declinationAngle = (4.0 + (26.0 / 60.0)) / (180 / PI);
+	float declinationAngle = (-1 + (28.0 / 60.0)) / (180 / M_PI);
 	heading += declinationAngle;
 
 	// Correct for heading < 0deg and heading > 360deg
 	if (heading < 0) {
-		heading += 2 * PI;
+		heading += 2 * M_PI;
 	}
 
-	if (heading > 2 * PI) {
-		heading -= 2 * PI;
+	if (heading > 2 * M_PI) {
+		heading -= 2 * M_PI;
 	}
 
 	// Convert to degrees
