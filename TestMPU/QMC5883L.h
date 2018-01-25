@@ -1,16 +1,3 @@
-/*!
-* @file DFRobot_QMC5883.h
-* @brief Compatible with QMC5883 and QMC5883
-* @n 3-Axis Digital Compass IC
-*
-* @copyright	[DFRobot](http://www.dfrobot.com), 2017
-* @copyright	GNU Lesser General Public License
-*
-* @author [dexian.huang](952838602@qq.com)
-* @version  V1.0
-* @date  2017-7-3
-*/
-
 #ifndef DFROBOT_QMC5883_H
 #define DFROBOT_QMC5883_H
 

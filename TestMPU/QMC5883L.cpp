@@ -1,4 +1,3 @@
-
 #include "QMC5883L.h"
 #include <stdio.h>  
 #include <wiringPi.h>
