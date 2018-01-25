@@ -226,8 +226,8 @@ void DFRobot_QMC5883::writeRegister8(int reg, int value)
 // Read byte to register
 int DFRobot_QMC5883::fastRegister8(int reg)
 {
-	wiringPiI2CWrite(fd, reg);
-	return wiringPiI2CRead(fd);
+	//wiringPiI2CWrite(fd, reg);
+	return wiringPiI2CReadReg8(fd, reg);
 }
 
 // Read byte from register
