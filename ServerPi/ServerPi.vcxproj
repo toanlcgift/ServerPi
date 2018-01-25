@@ -52,6 +52,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="QMC5883L.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="QMC5883L.h" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

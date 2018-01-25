@@ -11,18 +11,12 @@
 #include <errno.h>
 #include <math.h>
 #include <pthread.h>
+#include "QMC5883L.h"
 
 #define MO1    0//index 11
 #define MO2    2//index 13
 #define MO3    3//index 15
 #define MO4    12//index 19
-
-#define MPU6050_ADDRESS (0x68)
-#define MPU6050_REG_PWR_MGMT_1 (0x6b)
-#define MPU6050_REG_DATA_START (0x3b)
-#define A_SCALE (16384.0)
-#define ANG_SCALE (131.0)
-#define PI 3.14
 
 #define TRIG (13) //index 21
 #define ECHO (14) //index 23
@@ -33,13 +27,8 @@
 int fd;
 int newsockfd;
 int data;
-
-int t = 0, dt = 1;
-const int MPU_addr = 0x68;
-short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
-float Ax = 0, Ay = 0, Az = 0;
-float Gx = 0, Gy = 0, Gz = 0;
-float roll = 0, pitch = 0, rollgy = 0, pitchgy = 0, rollac = 0, pitchac = 0, gain = 0.95;
+DFRobot_QMC5883 compass;
+float roll;
 double distance;
 
 pthread_t thread1, thread2, thread3, thread4;
@@ -60,7 +49,7 @@ void sendData(int sockfd) {
 	int n;
 	char buffer[1000];
 	memset(buffer, '\0', 1000);
-	sprintf(buffer, "{\"distance\":\"%f\", \"pitch\" : \"%.3f\", \"roll\" : \"%.3f\"}\r\n", distance, pitch, roll);
+	sprintf(buffer, "{\"distance\":\"%f\", \"roll\" : \"%.3f\"}\r\n", distance, roll);
 	if ((n = write(sockfd, buffer, strlen(buffer))) < 0)
 		error(const_cast<char *>("ERROR writing to socket"));
 }
@@ -78,55 +67,34 @@ float dist(float a, float b)
 	return sqrt((a*a) + (b*b));
 }
 
-void readMPU(int fd) {
+void readQMC5883L() {
+	Vector norm = compass.readNormalize();
 
-	t = millis();
-	uint8_t msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START);
-	uint8_t lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 1);
-	AcX = (msb << 8) | lsb;
+	// Calculate heading
+	float heading = atan2(norm.YAxis, norm.XAxis);
 
-	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 2);
-	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 3);
-	AcY = (msb << 8) | lsb;
+	// Set declination angle on your location and fix heading
+	// You can find your declination on: http://magnetic-declination.com/
+	// (+) Positive or (-) for negative
+	// For HaNoi/VietNam declination angle is -1'28E (positive)
+	// Formula: (deg + (min / 60.0)) / (180 / M_PI);
+	float declinationAngle = (-1 + (28.0 / 60.0)) / (180 / M_PI);
+	heading += declinationAngle;
 
-	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 4);
-	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 5);
-	AcZ = (msb << 8) | lsb;
+	// Correct for heading < 0deg and heading > 360deg
+	if (heading < 0) {
+		heading += 2 * M_PI;
+	}
 
-	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 6);
-	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 7);
-	Tmp = (msb << 8) | lsb;
+	if (heading > 2 * M_PI) {
+		heading -= 2 * M_PI;
+	}
 
-	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 8);
-	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 9);
-	GyX = (msb << 8) | lsb;
+	// Convert to degrees
+	roll = heading * 180 / M_PI;
 
-	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 10);
-	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 11);
-	GyY = (msb << 8) | lsb;
-
-	msb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 12);
-	lsb = wiringPiI2CReadReg8(fd, MPU6050_REG_DATA_START + 13);
-	GyZ = (msb << 8) | lsb;
-
-	Ax = AcX / A_SCALE;
-	Ay = AcY / A_SCALE;
-	Az = AcZ / A_SCALE;
-
-	Gx = GyX / ANG_SCALE;
-	Gy = GyY / ANG_SCALE;
-	Gz = GyZ / ANG_SCALE;
-
-	printf("accelX=%f, accelY=%f, accelZ=%f, gyroX=%f, gyroY=%f, gyroZ=%f\n", Ax, Ay, Az, Gx, Gy, Gz);
-
-	pitchgy = (Gy * ((float)dt / 1000)) + pitch;
-	rollgy = (Gx * ((float)dt / 1000)) + roll;
-	pitchac = atan2(Ax, Az) * (float)(180 / PI);
-	rollac = atan2(Ay, Az) * (float)(180 / PI);
-	roll = gain * rollgy + (1 - gain)* rollac;
-	pitch = gain * pitchgy + (1 - gain) * pitchac;
-	printf("roll: %f \n pitch: %f\n", roll, pitch);
-	dt = millis() - t;
+	// Output
+	printf("\n Heading = %f, Degrees = %f", heading, roll);
 }
 
 void readHCSR04() {
@@ -152,9 +120,9 @@ void readHCSR04() {
 	}
 }
 
-void *readMPUloop(void *ptr) {
+void *readQMC5883Lloop(void *ptr) {
 	while (1) {
-		readMPU(fd);
+		readQMC5883L();
 	}
 }
 
@@ -181,7 +149,7 @@ void *controlloop(void *ptr) {
 		switch (data)
 		{
 		case 'a':
-			readMPU(fd);
+			readQMC5883L();
 			sendData(newsockfd);
 			break;
 		case 'b':
@@ -236,6 +204,22 @@ void *controlloop(void *ptr) {
 	}
 }
 
+void initQMC5883L() {
+	while (!compass.begin())
+	{
+		printf("Could not find a valid QMC5883 sensor, check wiring!");
+		delay(500);
+	}
+
+	if (compass.isQMC()) {
+		printf("Initialize QMC5883");
+		compass.setRange(QMC5883_RANGE_2GA);
+		compass.setMeasurementMode(QMC5883_CONTINOUS);
+		compass.setDataRate(QMC5883_DATARATE_50HZ);
+		compass.setSamples(QMC5883_SAMPLES_8);
+	}
+}
+
 int main(void)
 {
 	printf("Raspberry Pi\n");
@@ -243,12 +227,7 @@ int main(void)
 	wiringPiSetupSys();
 	wiringPiSetup();
 
-	// Open an I2C connection
-	fd = wiringPiI2CSetup(MPU6050_ADDRESS);
-	checkRC(fd, "wiringPiI2CSetup");
-
-	// Perform I2C work
-	wiringPiI2CWriteReg8(fd, MPU6050_REG_PWR_MGMT_1, 0);
+	initQMC5883L();
 
 	pinMode(TRIG, OUTPUT);
 	pinMode(ECHO, INPUT);
@@ -292,7 +271,7 @@ int main(void)
 			error(const_cast<char *>("ERROR on accept"));
 		printf("opened new communication with client %d\n", newsockfd);
 
-		pthread_create(&thread1, NULL, readMPUloop, NULL);
+		pthread_create(&thread1, NULL, readQMC5883Lloop, NULL);
 		pthread_create(&thread2, NULL, readHCSR04loop, NULL);
 		pthread_create(&thread3, NULL, realtimeloop, NULL);
 		pthread_create(&thread4, NULL, controlloop, NULL);
