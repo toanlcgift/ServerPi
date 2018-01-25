@@ -93,7 +93,7 @@ void readQMC5883L() {
 	roll = heading * 180 / M_PI;
 
 	// Output
-	printf("\n Heading = %f, Degrees = %f", heading, roll);
+	//printf("\n Heading = %f, Degrees = %f", heading, roll);
 }
 
 void readHCSR04() {
