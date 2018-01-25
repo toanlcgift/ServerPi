@@ -24,7 +24,6 @@
 #define SOCK_STREAM 1
 #define AF_INET 2
 
-int fd;
 int newsockfd;
 int data;
 DFRobot_QMC5883 compass;
