@@ -3,6 +3,7 @@
 #include <stdio.h>  
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
+#include <netinet/in.h>
 
 int fd;
 
@@ -232,14 +233,17 @@ int DFRobot_QMC5883::fastRegister8(int reg)
 // Read byte from register
 int DFRobot_QMC5883::readRegister8(int reg)
 {
-	wiringPiI2CWrite(fd, reg);
+	//wiringPiI2CWrite(fd, reg);
 	return wiringPiI2CReadReg8(fd, reg);
 }
 // Read word from register
 int DFRobot_QMC5883::readRegister16(int reg)
 {
-	wiringPiI2CWrite(fd, reg);
-	return wiringPiI2CReadReg16(fd, reg);
+	//wiringPiI2CWrite(fd, reg);
+	uint8_t msb = wiringPiI2CReadReg8(fd, reg);
+	uint8_t lsb = wiringPiI2CReadReg8(fd, reg);
+	short x = msb << 8 | lsb;
+	return x;
 }
 
 int DFRobot_QMC5883::getICType(void)
