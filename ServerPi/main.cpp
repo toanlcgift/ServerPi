@@ -218,6 +218,18 @@ void *controlloop(void *ptr) {
 			digitalWrite(MO3, LOW);
 			digitalWrite(MO4, LOW);
 			break;
+		case 'j':
+			digitalWrite(MO1, LOW);
+			digitalWrite(MO2, HIGH);
+			digitalWrite(MO3, HIGH);
+			digitalWrite(MO4, LOW);
+			break;
+		case 'k':
+			digitalWrite(MO1, HIGH);
+			digitalWrite(MO2, LOW);
+			digitalWrite(MO3, LOW);
+			digitalWrite(MO4, HIGH);
+			break;
 		default:
 			break;
 		}
