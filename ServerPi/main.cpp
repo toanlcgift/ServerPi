@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <math.h>
 #include <pthread.h>
+#include <softPwm.h>
 
 #define MO1    0//index 11
 #define MO2    2//index 13
@@ -155,6 +156,25 @@ void readHCSR04() {
 void *readMPUloop(void *ptr) {
 	while (1) {
 		readMPU(fd);
+		if (pitch > 10 && pitch <= 45) {
+			digitalWrite(MO1, HIGH);
+			digitalWrite(MO2, LOW);
+			digitalWrite(MO3, LOW);
+			digitalWrite(MO4, HIGH);
+
+		}
+		else if (pitch < -10 && pitch >= -45) {
+			digitalWrite(MO1, LOW);
+			digitalWrite(MO2, HIGH);
+			digitalWrite(MO3, HIGH);
+			digitalWrite(MO4, LOW);
+		}
+		else {
+			digitalWrite(MO1, LOW);
+			digitalWrite(MO2, LOW);
+			digitalWrite(MO3, LOW);
+			digitalWrite(MO4, LOW);
+		}
 	}
 }
 
@@ -230,6 +250,8 @@ int main(void)
 
 	wiringPiSetupSys();
 	wiringPiSetup();
+
+	//softPwmCreate(MO1, OUTPUT, 50);
 
 	// Open an I2C connection
 	fd = wiringPiI2CSetup(MPU6050_ADDRESS);
