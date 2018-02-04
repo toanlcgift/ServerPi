@@ -25,9 +25,6 @@
 #define ANG_SCALE (131.0)
 #define PI 3.14
 
-#define TRIG (13) //index 21
-#define ECHO (14) //index 23
-
 #define SOCK_STREAM 1
 #define AF_INET 2
 
@@ -36,14 +33,12 @@ int newsockfd;
 int data;
 
 int t = 0, dt = 1;
-const int MPU_addr = 0x68;
 short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 float Ax = 0, Ay = 0, Az = 0;
 float Gx = 0, Gy = 0, Gz = 0;
 float roll = 0, pitch = 0, rollgy = 0, pitchgy = 0, rollac = 0, pitchac = 0, gain = 0.95;
-double distance;
 
-pthread_t thread1, thread2, thread3, thread4;
+pthread_t thread1, thread3, thread4;
 
 void error(char *msg) {
 	perror(msg);
@@ -61,7 +56,7 @@ void sendData(int sockfd) {
 	int n;
 	char buffer[1000];
 	memset(buffer, '\0', 1000);
-	sprintf(buffer, "{\"distance\":\"%f\", \"pitch\" : \"%.3f\", \"roll\" : \"%.3f\"}\r\n", distance, pitch, roll);
+	sprintf(buffer, "{\"pitch\" : \"%.3f\", \"roll\" : \"%.3f\"}\r\n", pitch, roll);
 	if ((n = write(sockfd, buffer, strlen(buffer))) < 0)
 		error(const_cast<char *>("ERROR writing to socket"));
 }
@@ -130,29 +125,6 @@ void readMPU(int fd) {
 	dt = millis() - t;
 }
 
-void readHCSR04() {
-	digitalWrite(TRIG, HIGH);
-	delayMicroseconds(10);
-	digitalWrite(TRIG, LOW);
-	unsigned int echoStart = millis();
-	while (digitalRead(ECHO) == LOW && millis() - echoStart < 1000) {
-		// do nothing
-	}
-	if (millis() - echoStart < 1000) {
-		// Mark start
-		unsigned int start = micros();
-		while (digitalRead(ECHO) == HIGH) {
-			// do nothing
-		}
-		// Mark end
-		unsigned int end = micros();
-		unsigned int delta = end - start;
-
-		distance = 34029 * delta / 2000000.0;
-		printf("Distance: %f\n", distance);
-	}
-}
-
 void *readMPUloop(void *ptr) {
 	while (1) {
 		readMPU(fd);
@@ -178,12 +150,6 @@ void *readMPUloop(void *ptr) {
 	}
 }
 
-void *readHCSR04loop(void *ptr) {
-	while (1) {
-		readHCSR04();
-	}
-}
-
 void *realtimeloop(void *ptr) {
 	while (1) {
 		sendData(newsockfd);
@@ -200,14 +166,6 @@ void *controlloop(void *ptr) {
 			printf("got %d\n", data);
 		switch (data)
 		{
-		case 'a':
-			readMPU(fd);
-			sendData(newsockfd);
-			break;
-		case 'b':
-			readHCSR04();
-			sendData(newsockfd);
-			break;
 		case 'c':
 			digitalWrite(MO1, LOW);
 			digitalWrite(MO2, HIGH);
@@ -260,10 +218,6 @@ int main(void)
 	// Perform I2C work
 	wiringPiI2CWriteReg8(fd, MPU6050_REG_PWR_MGMT_1, 0);
 
-	pinMode(TRIG, OUTPUT);
-	pinMode(ECHO, INPUT);
-	digitalWrite(TRIG, LOW);
-
 	delay(50);
 
 	pinMode(MO1, OUTPUT);
@@ -303,11 +257,9 @@ int main(void)
 		printf("opened new communication with client %d\n", newsockfd);
 
 		pthread_create(&thread1, NULL, readMPUloop, NULL);
-		pthread_create(&thread2, NULL, readHCSR04loop, NULL);
 		pthread_create(&thread3, NULL, realtimeloop, NULL);
 		pthread_create(&thread4, NULL, controlloop, NULL);
 		pthread_join(thread1, NULL);
-		pthread_join(thread2, NULL);
 		pthread_join(thread3, NULL);
 		pthread_join(thread4, NULL);
 
