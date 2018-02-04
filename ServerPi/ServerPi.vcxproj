@@ -51,11 +51,14 @@
     </RemotePostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="LMotorController.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="QMC5883L.cpp" />
+    <ClCompile Include="PID_v1.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="QMC5883L.h" />
+    <ClInclude Include="helper_3dmath.h" />
+    <ClInclude Include="LMotorController.h" />
+    <ClInclude Include="PID_v1.h" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
