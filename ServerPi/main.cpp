@@ -12,11 +12,16 @@
 #include <math.h>
 #include <pthread.h>
 #include <softPwm.h>
+#include "PID_v1.h"
+#include "LMotorController.h"
 
 #define MO1    0//index 11
 #define MO2    2//index 13
 #define MO3    3//index 15
 #define MO4    12//index 19
+#define ENA    13 //index 21
+#define ENB    14 //index 23
+#define MIN_ABS_SPEED 20
 
 #define MPU6050_ADDRESS (0x68)
 #define MPU6050_REG_PWR_MGMT_1 (0x6b)
@@ -37,6 +42,22 @@ short AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 float Ax = 0, Ay = 0, Az = 0;
 float Gx = 0, Gy = 0, Gz = 0;
 float roll = 0, pitch = 0, rollgy = 0, pitchgy = 0, rollac = 0, pitchac = 0, gain = 0.95;
+
+//PID
+double originalSetpoint = 175.8;
+double setpoint = originalSetpoint;
+double movingAngleOffset = 0.1;
+double input, output;
+double Kp = 50;
+double Kd = 1.4;
+double Ki = 60;
+PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
+
+double motorSpeedFactorLeft = 0.6;
+double motorSpeedFactorRight = 0.5;
+//MOTOR CONTROLLER
+
+LMotorController motorController(ENA, MO1, MO2, ENB, MO3, MO4, motorSpeedFactorLeft, motorSpeedFactorRight);
 
 pthread_t thread1, thread3, thread4;
 
@@ -121,6 +142,7 @@ void readMPU(int fd) {
 	rollac = atan2(Ay, Az) * (float)(180 / PI);
 	roll = gain * rollgy + (1 - gain)* rollac;
 	pitch = gain * pitchgy + (1 - gain) * pitchac;
+	input = pitch;
 	printf("roll: %f \n pitch: %f\n", roll, pitch);
 	dt = millis() - t;
 }
@@ -128,25 +150,8 @@ void readMPU(int fd) {
 void *readMPUloop(void *ptr) {
 	while (1) {
 		readMPU(fd);
-		if (pitch > 10 && pitch <= 45) {
-			digitalWrite(MO1, HIGH);
-			digitalWrite(MO2, LOW);
-			digitalWrite(MO3, LOW);
-			digitalWrite(MO4, HIGH);
-
-		}
-		else if (pitch < -10 && pitch >= -45) {
-			digitalWrite(MO1, LOW);
-			digitalWrite(MO2, HIGH);
-			digitalWrite(MO3, HIGH);
-			digitalWrite(MO4, LOW);
-		}
-		else {
-			digitalWrite(MO1, LOW);
-			digitalWrite(MO2, LOW);
-			digitalWrite(MO3, LOW);
-			digitalWrite(MO4, LOW);
-		}
+		pid.Compute();
+		motorController.move(output, MIN_ABS_SPEED);
 	}
 }
 
@@ -209,8 +214,6 @@ int main(void)
 	wiringPiSetupSys();
 	wiringPiSetup();
 
-	//softPwmCreate(MO1, OUTPUT, 50);
-
 	// Open an I2C connection
 	fd = wiringPiI2CSetup(MPU6050_ADDRESS);
 	checkRC(fd, "wiringPiI2CSetup");
@@ -220,14 +223,14 @@ int main(void)
 
 	delay(50);
 
-	pinMode(MO1, OUTPUT);
+	/*pinMode(MO1, OUTPUT);
 	pinMode(MO2, OUTPUT);
 	pinMode(MO3, OUTPUT);
 	pinMode(MO4, OUTPUT);
 	digitalWrite(MO1, LOW);
 	digitalWrite(MO2, LOW);
 	digitalWrite(MO3, LOW);
-	digitalWrite(MO4, LOW);
+	digitalWrite(MO4, LOW);*/
 
 	int sockfd, portno = 51717, client;
 	char buffer[256];
