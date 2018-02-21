@@ -142,7 +142,7 @@ void readMPU(int fd) {
 	rollac = atan2(Ay, Az) * (float)(180 / PI);
 	roll = gain * rollgy + (1 - gain)* rollac;
 	pitch = gain * pitchgy + (1 - gain) * pitchac;
-	input = pitch;
+	input = pitch + 180;
 	printf("roll: %f \n pitch: %f\n", roll, pitch);
 	dt = millis() - t;
 }
@@ -231,6 +231,12 @@ int main(void)
 	digitalWrite(MO2, LOW);
 	digitalWrite(MO3, LOW);
 	digitalWrite(MO4, LOW);*/
+
+	//setup PID
+
+	pid.SetMode(AUTOMATIC);
+	pid.SetSampleTime(10);
+	pid.SetOutputLimits(-255, 255);
 
 	int sockfd, portno = 51717, client;
 	char buffer[256];
