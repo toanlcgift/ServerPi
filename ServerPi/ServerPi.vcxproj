@@ -51,15 +51,10 @@
     </RemotePostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="LMotorController.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PID_v1.cpp" />
     <ClCompile Include="softServo.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="helper_3dmath.h" />
-    <ClInclude Include="LMotorController.h" />
-    <ClInclude Include="PID_v1.h" />
     <ClInclude Include="softServo.h" />
   </ItemGroup>
   <ItemDefinitionGroup />
