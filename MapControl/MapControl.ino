@@ -18,7 +18,7 @@
 
 #define SPLIT_CHAR '*'
 
-Servo myservo;  // create servo object to control a servo 
+Servo myservo[8];  // create servo object to control a servo 
 				// twelve servo objects can be created on most boards
 
 Timer t;
@@ -44,7 +44,14 @@ char parse[3];
 
 void setup()
 {
-	myservo.attach(2);  // attaches the servo on GIO2 to the servo object 
+	myservo[0].attach(16);  // attaches the servo on GIO2 to the servo object 
+	myservo[1].attach(5);
+	myservo[2].attach(4);
+	myservo[3].attach(0);
+	myservo[4].attach(2);
+	myservo[5].attach(14);
+	myservo[6].attach(12);
+	myservo[7].attach(13);
 	Serial.begin(9600);
 	EEPROM.begin(512);
 	for (uint8_t t = 4; t > 0; t--) {
@@ -120,7 +127,9 @@ void onPostServo() {
 	auto con = content.c_str();
 	Serial.println(content);
 	int pos = atoi(con);
-	myservo.write(pos);
+	for (int i = 0; i < 8; i++)
+		myservo[i].write(pos);
+	server.send_P(200, "text/html", "success!");
 }
 
 void getRomSetting() {
