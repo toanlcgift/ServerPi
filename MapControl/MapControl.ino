@@ -15,6 +15,7 @@
 #include "FS.h"
 #include <ESP8266FtpServer.h>
 #include <Timer.h>
+#include <ArduinoJson.h>
 
 #define SPLIT_CHAR '*'
 
@@ -125,10 +126,19 @@ void onGetSetting() {
 void onPostServo() {
 	auto content = server.arg("plain");
 	auto con = content.c_str();
+
 	Serial.println(content);
-	int pos = atoi(con);
-	for (int i = 0; i < 8; i++)
-		myservo[i].write(pos);
+	StaticJsonBuffer<200> jsonBuffer;
+
+	JsonObject& root = jsonBuffer.parseObject(con);
+	myservo[0].write(root["servo0"]);
+	myservo[1].write(root["servo1"]);
+	myservo[2].write(root["servo2"]);
+	myservo[3].write(root["servo3"]);
+	myservo[4].write(root["servo4"]);
+	myservo[5].write(root["servo5"]);
+	myservo[6].write(root["servo6"]);
+	myservo[7].write(root["servo7"]);
 	server.send_P(200, "text/html", "success!");
 }
 
